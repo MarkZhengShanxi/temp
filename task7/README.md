@@ -54,7 +54,7 @@ ant auth login
 
 ```bash
 ANTHROPIC_AUTH_TOKEN=your-token
-ANTHROPIC_BASE_URL=https://muses-claude-proxy.weizhipin.com
+ANTHROPIC_BASE_URL=xxxx
 ANTHROPIC_DEFAULT_OPUS_MODEL=openai/gpt-5.5
 API_TIMEOUT_MS=600000
 ANTHROPIC_ENABLE_CLAUDE_PARAMS=false
