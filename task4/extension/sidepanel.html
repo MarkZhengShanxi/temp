@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Browser Agent</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Browser Agent</h1>
+      <p>ChatGPT / OpenAI-compatible 浏览器操作 Agent</p>
+    </header>
+
+    <section class="card">
+      <h2>配置</h2>
+      <label>本地后端 URL <input id="backendUrl" /></label>
+      <label>Base URL <input id="baseUrl" /></label>
+      <label>API Key <input id="apiKey" type="password" autocomplete="off" /></label>
+      <label>Model <input id="model" /></label>
+      <div class="row">
+        <label>Temperature <input id="temperature" type="number" min="0" max="2" step="0.1" /></label>
+        <label>Max tokens <input id="maxTokens" type="number" min="1" step="1" /></label>
+      </div>
+      <label class="checkbox"><input id="rememberKey" type="checkbox" /> 记住 API Key 到本机 Chrome 存储</label>
+      <div class="row buttons">
+        <button id="saveConfig">保存</button>
+        <button id="testConfig">测试连接</button>
+        <button id="clearKey">清除 Key</button>
+      </div>
+      <p class="hint">API Key 不会发送到当前网页；只会发送给你配置的本地后端。</p>
+    </section>
+
+    <section class="card">
+      <h2>任务</h2>
+      <textarea id="task" placeholder="例如：总结当前页面；在搜索框输入 ChatGPT API 但不要提交；找到 pricing 链接并打开"></textarea>
+      <div class="row buttons">
+        <button id="start">开始执行</button>
+        <button id="stop" disabled>停止</button>
+        <button id="observe">观察当前页</button>
+      </div>
+    </section>
+
+    <section id="confirmCard" class="card warning hidden">
+      <h2>需要确认</h2>
+      <p id="confirmText"></p>
+      <pre id="confirmAction"></pre>
+      <div class="row buttons">
+        <button id="allowAction">允许一次</button>
+        <button id="denyAction">拒绝并停止</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>状态</h2>
+      <div id="status">未连接</div>
+      <pre id="log"></pre>
+    </section>
+
+    <script src="sidepanel.js"></script>
+  </body>
+</html>

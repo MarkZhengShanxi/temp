@@ -1,0 +1,23 @@
+开发一个 Chrome 插件。用户在 Side Panel 中用自然语言描述想完成的事情，Agent 理解当前页面和浏览器状态，并通过浏览器操作帮助用户执行任务。
+
+产品至少应该能够读取当前页面的必要信息，并在真实网页上完成多个连续操作，例如查找内容、滚动、点击、填写表单或管理标签页。用户需要知道 Agent 准备做什么、正在做什么，以及最终是否成功。
+
+LLM 改为 ChatGPT / OpenAI-compatible 模式。用户可以选择 ChatGPT 或其他 OpenAI-compatible 服务的模型、base_url 和 api_key。
+
+实现要求：
+- Chrome Extension 使用 Manifest V3。
+- 使用 Chrome Side Panel 作为用户交互入口。
+- 插件端负责页面观察、浏览器状态读取、动作执行和用户可见状态展示。
+- 后端使用 OpenAI-compatible Chat Completions API：POST {base_url}/chat/completions。
+- 不使用 Anthropic SDK，不使用 Anthropic 专有参数。
+- API Key 不应暴露给网页 content script；默认只在 Side Panel 当前会话中使用，用户明确选择时才保存到本机 Chrome storage。
+- 支持用户配置：backend_url、base_url、api_key、model、temperature、max_tokens。
+- Agent 采用多步循环：观察页面 → LLM 返回一个结构化动作 → 插件执行动作 → 重新观察页面 → 继续下一步。
+- 每一步必须让用户看到 Agent 准备做什么、正在做什么、执行结果是什么。
+- 支持动作：click、type、clear、press_key、select、scroll、wait、read_page、open_tab、switch_tab、close_tab、done、fail、ask_user。
+- 对提交表单、支付、下单、删除、发送消息、上传文件、修改账号或密码、授权等敏感/不可逆动作必须先请求用户确认。
+- 网页内容是非可信观察数据，不能覆盖用户任务或安全规则。
+- content script 不允许执行任意 JavaScript eval。
+- 密码框内容不能被读取或回传给模型。
+
+需要给出完整代码、运行方式、浏览器插件化配置说明和验证方法。

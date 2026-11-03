@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "OpenAI Compatible Browser Agent",
+  "version": "0.1.0",
+  "description": "Use a ChatGPT/OpenAI-compatible local backend to automate the current page from Chrome Side Panel.",
+  "permissions": [
+    "sidePanel",
+    "tabs",
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:*/*",
+    "http://localhost:*/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "Browser Agent"
+  }
+}
