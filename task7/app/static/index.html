@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI记事本</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">AI Notebook</p>
+        <h1>AI记事本</h1>
+        <p>说一句或写一段，自动识别记事、提醒、查找和删除。</p>
+      </div>
+      <button id="notifyBtn" class="ghost-button">开启系统通知</button>
+    </header>
+
+    <section class="composer card">
+      <label for="commandInput">输入内容</label>
+      <textarea id="commandInput" rows="5" placeholder="例如：每隔5分钟提醒我喝水；记一下：客户预算下周确认"></textarea>
+      <div class="actions">
+        <button id="submitBtn">解析并执行</button>
+        <button id="voiceBtn" class="secondary" type="button">按住说话</button>
+      </div>
+      <p id="speechStatus" class="hint"></p>
+      <pre id="resultBox" class="result-box"></pre>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <div class="section-title">
+          <h2>记录列表</h2>
+          <button id="refreshBtn" class="ghost-button">刷新</button>
+        </div>
+        <div class="search-row">
+          <input id="searchInput" placeholder="搜索关键词" />
+          <button id="searchBtn" class="secondary">搜索</button>
+        </div>
+        <div id="itemsList" class="items-list"></div>
+      </div>
+
+      <div class="card">
+        <h2>提醒</h2>
+        <div id="reminderPanel" class="reminder-panel empty">等待提醒事件...</div>
+      </div>
+    </section>
+  </main>
+
+  <template id="itemTemplate">
+    <article class="item">
+      <div>
+        <span class="badge"></span>
+        <h3></h3>
+        <p></p>
+        <small></small>
+      </div>
+      <button class="danger">删除</button>
+    </article>
+  </template>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
