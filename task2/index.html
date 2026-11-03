@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>双人炸金花</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #102019;
+      --panel: #183126;
+      --panel-2: #213d31;
+      --text: #f3f6ef;
+      --muted: #b8c6bb;
+      --primary: #f6c453;
+      --danger: #ff7575;
+      --ok: #63d68f;
+      --border: rgba(255, 255, 255, .13);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top, #25533e, var(--bg) 55%);
+    }
+    .wrap { width: min(1100px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 36px; }
+    h1 { margin: 0 0 8px; font-size: 34px; letter-spacing: .05em; }
+    .sub { margin: 0 0 20px; color: var(--muted); }
+    .grid { display: grid; grid-template-columns: 340px 1fr; gap: 16px; align-items: start; }
+    .card {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.22);
+    }
+    .card h2 { margin: 0 0 14px; font-size: 18px; }
+    label { display: block; margin: 12px 0 6px; color: var(--muted); font-size: 14px; }
+    input, select, button {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 12px;
+      font-size: 15px;
+    }
+    input, select { color: var(--text); background: rgba(0,0,0,.22); outline: none; }
+    button {
+      color: #241a03;
+      background: var(--primary);
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .12s ease, opacity .12s ease;
+    }
+    button:hover:not(:disabled) { transform: translateY(-1px); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .muted { color: var(--muted); }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .pill.ok { color: var(--ok); }
+    .pill.warn { color: var(--primary); }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat { padding: 12px; border-radius: 14px; background: rgba(0,0,0,.18); border: 1px solid var(--border); }
+    .stat b { display: block; margin-top: 4px; font-size: 20px; }
+    .players { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .player { border: 1px solid var(--border); border-radius: 16px; padding: 14px; background: rgba(0,0,0,.15); }
+    .player.turn { outline: 2px solid var(--primary); }
+    .player.winner { outline: 2px solid var(--ok); }
+    .player .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .name { font-size: 18px; font-weight: 800; }
+    .cards { display: flex; gap: 8px; flex-wrap: wrap; min-height: 68px; align-items: center; }
+    .poker {
+      width: 52px;
+      height: 68px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: #f8f5eb;
+      color: #1e1e1e;
+      font-size: 20px;
+      font-weight: 900;
+      box-shadow: 0 5px 14px rgba(0,0,0,.25);
+    }
+    .poker.back { color: #f8f5eb; background: repeating-linear-gradient(45deg, #7b1f30, #7b1f30 6px, #9e3045 6px, #9e3045 12px); }
+    .red { color: #b5122b; }
+    .actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+    .danger { background: var(--danger); color: #260606; }
+    .secondary { background: rgba(255,255,255,.12); color: var(--text); }
+    .result { margin-top: 14px; padding: 14px; border-radius: 14px; background: rgba(99,214,143,.12); border: 1px solid rgba(99,214,143,.35); }
+    .log { max-height: 220px; overflow: auto; font-size: 14px; line-height: 1.55; }
+    .log div { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .error { color: var(--danger); }
+    .hidden { display: none !important; }
+    @media (max-width: 850px) {
+      .grid, .players, .stats, .actions { grid-template-columns: 1fr; }
+      .row, .row3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>双人炸金花</h1>
+    <p class="sub">无闷牌 · 双人实时联机 · 双方确认开始和再来一局</p>
+
+    <section class="grid">
+      <aside class="card">
+        <h2>房间</h2>
+        <div id="conn" class="pill warn">连接中...</div>
+
+        <div id="entry">
+          <label for="name">昵称</label>
+          <input id="name" maxlength="12" placeholder="例如 Alice" />
+          <div class="row" style="margin-top: 12px;">
+            <button id="createBtn">创建房间</button>
+            <button id="joinBtn">加入房间</button>
+          </div>
+          <label for="roomInput">房间号</label>
+          <input id="roomInput" maxlength="4" placeholder="输入 4 位房间号" />
+        </div>
+
+        <div id="lobby" class="hidden">
+          <p>房间号：<b id="roomCode">-</b></p>
+          <p class="muted">把房间号发给另一名玩家，双方点击准备后开始。</p>
+          <div class="row">
+            <button id="readyBtn">准备开始</button>
+            <button id="leaveBtn" class="secondary">退出房间</button>
+          </div>
+        </div>
+
+        <div style="margin-top: 18px;">
+          <h2>日志</h2>
+          <div id="log" class="log"></div>
+        </div>
+      </aside>
+
+      <section class="card">
+        <h2>牌桌</h2>
+        <div id="empty" class="muted">请先创建或加入房间。</div>
+
+        <div id="table" class="hidden">
+          <div class="stats">
+            <div class="stat">阶段<b id="phase">-</b></div>
+            <div class="stat">奖池<b id="pot">0</b></div>
+            <div class="stat">当前注额<b id="bet">1</b></div>
+            <div class="stat">轮数<b id="round">0 / 6</b></div>
+          </div>
+
+          <p class="pill" id="turnInfo">等待中</p>
+          <div id="players" class="players"></div>
+
+          <div id="actionPanel" class="hidden">
+            <div class="row3">
+              <button id="callBtn">跟注</button>
+              <select id="raiseAmount"></select>
+              <button id="raiseBtn">加注</button>
+            </div>
+            <div class="actions">
+              <button id="foldBtn" class="danger">弃牌</button>
+              <button id="compareBtn">比牌</button>
+              <button id="againBtn" class="hidden">再来一局</button>
+              <button id="copyBtn" class="secondary">复制房间号</button>
+            </div>
+          </div>
+
+          <div id="result" class="result hidden"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    let ws;
+    let state = null;
+    let playerId = null;
+    let roomId = null;
+
+    const $ = (id) => document.getElementById(id);
+    const phaseText = { waiting: "等待", playing: "游戏中", round_end: "已结算" };
+    const reasonText = { fold: "弃牌结束", compare: "比牌结束", showdown: "6轮自动摊牌", disconnect: "对手断线" };
+
+    function log(text, isError = false) {
+      const line = document.createElement("div");
+      line.textContent = `${new Date().toLocaleTimeString()}  ${text}`;
+      if (isError) line.className = "error";
+      $("log").prepend(line);
+    }
+
+    function connect() {
+      const scheme = location.protocol === "https:" ? "wss" : "ws";
+      ws = new WebSocket(`${scheme}://${location.host}/ws`);
+      ws.onopen = () => {
+        $("conn").textContent = "已连接";
+        $("conn").className = "pill ok";
+        log("已连接服务器");
+      };
+      ws.onclose = () => {
+        $("conn").textContent = "连接断开";
+        $("conn").className = "pill";
+        log("连接已断开，请刷新页面", true);
+      };
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.type === "joined") {
+          playerId = msg.player_id;
+          roomId = msg.room_id;
+          log(`进入房间 ${roomId}`);
+        } else if (msg.type === "state") {
+          state = msg.state;
+          roomId = state.room_id;
+          render();
+        } else if (msg.type === "error") {
+          log(msg.message, true);
+        } else if (msg.type === "left") {
+          log("已退出房间");
+          state = null;
+          playerId = null;
+          roomId = null;
+          render();
+        }
+      };
+    }
+
+    function send(data) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        log("服务器未连接", true);
+        return;
+      }
+      ws.send(JSON.stringify(data));
+    }
+
+    function playerName() {
+      return $("name").value.trim() || `玩家${Math.floor(Math.random() * 900 + 100)}`;
+    }
+
+    function isRed(card) {
+      return card.includes("♥") || card.includes("♦");
+    }
+
+    function cardsHtml(cards) {
+      if (!cards) {
+        return `<span class="poker back">?</span><span class="poker back">?</span><span class="poker back">?</span>`;
+      }
+      return cards.map(card => `<span class="poker ${isRed(card) ? "red" : ""}">${card}</span>`).join("");
+    }
+
+    function renderPlayers() {
+      const players = state.players || [];
+      $("players").innerHTML = players.map((p) => {
+        const mine = p.id === state.you;
+        const isTurn = p.id === state.turn_player_id;
+        const isWinner = state.phase === "round_end" && p.id === state.winner_id;
+        const tags = [];
+        if (mine) tags.push("你");
+        if (p.ready && state.phase === "waiting") tags.push("已准备");
+        if (p.again && state.phase === "round_end") tags.push("已确认再来");
+        if (p.folded) tags.push("已弃牌");
+        return `
+          <article class="player ${isTurn ? "turn" : ""} ${isWinner ? "winner" : ""}">
+            <div class="top">
+              <span class="name">${escapeHtml(p.name)}</span>
+              <span class="pill">${tags.join(" · ") || "玩家"}</span>
+            </div>
+            <div class="muted">筹码：${p.chips}　行动：${p.action_count} 次${p.hand_name ? `　牌型：${p.hand_name}` : ""}</div>
+            <div class="cards" style="margin-top: 12px;">${cardsHtml(p.cards)}</div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function escapeHtml(text) {
+      return String(text).replace(/[&<>"]/g, (ch) => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;"}[ch]));
+    }
+
+    function renderRaiseOptions() {
+      const select = $("raiseAmount");
+      const current = state ? state.current_bet : 1;
+      select.innerHTML = "";
+      for (let amount = current + 1; amount <= 5; amount++) {
+        const option = document.createElement("option");
+        option.value = amount;
+        option.textContent = `加到 ${amount}`;
+        select.appendChild(option);
+      }
+      select.disabled = current >= 5;
+    }
+
+    function renderResult() {
+      const box = $("result");
+      if (!state || state.phase !== "round_end") {
+        box.classList.add("hidden");
+        box.innerHTML = "";
+        return;
+      }
+      const winner = state.players.find(p => p.id === state.winner_id);
+      const you = state.players.find(p => p.id === state.you);
+      const lines = [];
+      lines.push(`<b>${winner ? `胜者：${escapeHtml(winner.name)}` : "平局：奖池平分"}</b>`);
+      lines.push(`<div>原因：${reasonText[state.end_reason] || state.end_reason || "结算"}</div>`);
+      lines.push(`<div>再来一局：${state.players.map(p => `${escapeHtml(p.name)} ${p.again ? "✅" : "⏳"}`).join("　")}</div>`);
+      if (you && you.again) lines.push(`<div class="muted">你已确认，等待对方确认。</div>`);
+      box.innerHTML = lines.join("");
+      box.classList.remove("hidden");
+    }
+
+    function render() {
+      const hasRoom = Boolean(state);
+      $("entry").classList.toggle("hidden", hasRoom);
+      $("empty").classList.toggle("hidden", hasRoom);
+      $("table").classList.toggle("hidden", !hasRoom);
+      $("lobby").classList.toggle("hidden", !hasRoom || state.phase !== "waiting");
+      $("actionPanel").classList.toggle("hidden", !hasRoom);
+      if (!hasRoom) return;
+
+      $("roomCode").textContent = state.room_id;
+      $("phase").textContent = phaseText[state.phase] || state.phase;
+      $("pot").textContent = state.pot;
+      $("bet").textContent = state.current_bet;
+      $("round").textContent = state.phase === "playing" ? `${state.round} / ${state.max_rounds}` : `0 / ${state.max_rounds}`;
+      $("turnInfo").textContent = state.phase === "playing" ? `当前行动：${state.turn_player_name}${state.turn_player_id === state.you ? "（你）" : ""}` : "等待玩家操作";
+
+      renderPlayers();
+      renderRaiseOptions();
+      renderResult();
+
+      const myTurn = state.phase === "playing" && state.turn_player_id === state.you;
+      const canRaise = myTurn && state.current_bet < 5;
+      $("readyBtn").disabled = state.players.length < 2 || Boolean(state.players.find(p => p.id === state.you)?.ready);
+      $("leaveBtn").disabled = state.phase !== "waiting";
+      $("callBtn").disabled = !myTurn;
+      $("raiseBtn").disabled = !canRaise;
+      $("foldBtn").disabled = !myTurn;
+      $("compareBtn").disabled = !myTurn || !state.can_compare;
+      $("againBtn").classList.toggle("hidden", state.phase !== "round_end");
+      $("againBtn").disabled = state.phase !== "round_end" || Boolean(state.players.find(p => p.id === state.you)?.again);
+    }
+
+    $("createBtn").onclick = () => send({ type: "create", name: playerName() });
+    $("joinBtn").onclick = () => send({ type: "join", name: playerName(), room_id: $("roomInput").value.trim().toUpperCase() });
+    $("readyBtn").onclick = () => send({ type: "ready" });
+    $("leaveBtn").onclick = () => send({ type: "leave" });
+    $("callBtn").onclick = () => send({ type: "action", move: "call" });
+    $("raiseBtn").onclick = () => send({ type: "action", move: "raise", amount: Number($("raiseAmount").value) });
+    $("foldBtn").onclick = () => send({ type: "action", move: "fold" });
+    $("compareBtn").onclick = () => send({ type: "action", move: "compare" });
+    $("againBtn").onclick = () => send({ type: "again" });
+    $("copyBtn").onclick = async () => {
+      if (!roomId) return;
+      try {
+        await navigator.clipboard.writeText(roomId);
+        log("房间号已复制");
+      } catch {
+        log(`房间号：${roomId}`);
+      }
+    };
+
+    connect();
+    render();
+  </script>
+</body>
+</html>
